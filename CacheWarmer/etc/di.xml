@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="cloudcommerce_cache_warm" xsi:type="object">CloudCommerce\CacheWarmer\Console\Command\WarmCache</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="CloudCommerce\CacheWarmer\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">cacheWarmerLogger</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">CloudCommerce\CacheWarmer\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

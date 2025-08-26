@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Cache/etc/cache.xsd">
+    <type name="cloudcommerce_url_collection" translate="label,description" instance="CloudCommerce\CacheWarmer\Model\Cache\Type\UrlCollection">
+        <label>CloudCommerce URL Collection</label>
+        <description>Cache for collected URLs used by cache warmer</description>
+        <status>1</status>
+    </type>
+</config>

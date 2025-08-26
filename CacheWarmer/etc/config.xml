@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <cloudcommerce_cachewarmer>
+            <general>
+                <enabled>0</enabled>
+            </general>
+            <urls>
+                <warm_categories>1</warm_categories>
+                <warm_products>1</warm_products>
+                <warm_cms>1</warm_cms>
+            </urls>
+        </cloudcommerce_cachewarmer>
+    </default>
+</config>
