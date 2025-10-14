@@ -14,6 +14,16 @@ A powerful Magento 2 module that automatically warms page cache by pre-loading U
 
 ## Installation
 
+### Via Composer (Recommended)
+```bash
+composer require cloudcommerce/cachewarmer
+php bin/magento module:enable CloudCommerce_CacheWarmer
+php bin/magento setup:upgrade
+php bin/magento setup:di:compile
+php bin/magento cache:flush
+```
+
+### Manual Installation
 1. Copy module files to `app/code/CloudCommerce/CacheWarmer/`
 2. Run setup commands:
 ```bash
