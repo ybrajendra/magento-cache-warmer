@@ -13,7 +13,6 @@ use Magento\PageCache\Model\Cache\Type as PageCache;
 use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\PageCache\Model\App\Request\Http\IdentifierForSave;
 use Magento\Framework\App\Request\Http as HttpRequest;
 
 /**
@@ -35,8 +34,8 @@ class Warmer
     private $httpContext;
     private $serializer;
     private $directoryList;
-    private $identifierForSave;
     private $httpRequest;
+    private $identifierForSave;
 
     /**
      * Constructor
@@ -49,7 +48,6 @@ class Warmer
      * @param HttpContext $httpContext
      * @param Json $serializer
      * @param DirectoryList $directoryList
-     * @param IdentifierForSave $identifierForSave
      * @param HttpRequest $httpRequest
      */
     public function __construct(
@@ -62,7 +60,6 @@ class Warmer
         HttpContext $httpContext,
         Json $serializer,
         DirectoryList $directoryList,
-        IdentifierForSave $identifierForSave,
         HttpRequest $httpRequest
     ) {
         $this->scopeConfig = $scopeConfig;
@@ -74,8 +71,16 @@ class Warmer
         $this->httpContext = $httpContext;
         $this->serializer = $serializer;
         $this->directoryList = $directoryList;
-        $this->identifierForSave = $identifierForSave;
         $this->httpRequest = $httpRequest;
+        // Initialize IdentifierForSave only if available (Magento 2.4.8+)
+        if (class_exists('\Magento\PageCache\Model\App\Request\Http\IdentifierForSave')) {
+            $this->identifierForSave = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get('\Magento\PageCache\Model\App\Request\Http\IdentifierForSave');
+        } else {
+            // Fallback to standard Identifier for older versions
+            $this->identifierForSave = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get('\Magento\Framework\App\PageCache\Identifier');
+        }
     }
 
     /**
@@ -157,13 +162,8 @@ class Warmer
     public function checkCacheStatus(string $url): array
     {
         try {
-            // Generate cache key using Magento's identifier
-            $originalUri = $this->httpRequest->getUriString();
-            $this->httpRequest->setUri($url);
-            $cacheKey = $this->identifierForSave->getValue();
-
-            $this->httpRequest->setUri($originalUri);
-            
+            // Generate cache key with version compatibility
+            $cacheKey = $this->generateCacheKey($url);
             $this->logger->info("Checking cache for URL: {$url} with key: {$cacheKey}");
             
             // Check page cache first
@@ -176,8 +176,6 @@ class Warmer
                     'cache_key' => $cacheKey
                 ];
             }
-            
-
             
             // Check file-based cache directly
             $fileExists = $this->checkFileCacheExists($cacheKey);
@@ -205,7 +203,17 @@ class Warmer
         }
     }
     
-
+    /**
+     * Generate cache key compatible with both Magento versions
+     */
+    private function generateCacheKey(string $url): string
+    {
+        $originalUri = $this->httpRequest->getUriString();
+        $this->httpRequest->setUri($url);
+        $cacheKey = $this->identifierForSave->getValue();
+        $this->httpRequest->setUri($originalUri);
+        return $cacheKey;
+    }
     
     /**
      * Check if cache exists in file system (var/page_cache)
