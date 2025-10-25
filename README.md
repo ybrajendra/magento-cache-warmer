@@ -1,10 +1,11 @@
 # CloudCommerce Cache Warmer - Magento 2 Page Cache Warming Extension
 
-A powerful Magento 2 module that automatically warms page cache by pre-loading URLs to improve site performance, reduce page load times, and enhance user experience. Boost your eCommerce store's speed with intelligent cache warming.
+A powerful Magento 2 module that automatically warms page cache by pre-loading URLs to improve site performance, reduce page load times, and enhance user experience. Supports both Magento's built-in Full Page Cache and Varnish cache. Boost your eCommerce store's speed with intelligent cache warming.
 
 ## Features
 
 - **Smart Cache Detection** - Checks if pages are already cached before warming
+- **Varnish Cache Support** - Compatible with Varnish cache servers
 - **Multi-Store Support** - Supports multiple store views with separate URL collections
 - **Flexible Scheduling** - Configurable cron times from admin panel
 - **URL Collection Caching** - Caches collected URLs for improved performance
@@ -117,11 +118,11 @@ Logs are written to `var/log/cloudcommerce_cachewarmer.log` with detailed inform
 
 - Magento 2.4+
 - PHP 8.0+
-- Full Page Cache enabled
+- Full Page Cache or Varnish cache enabled
 
 ## SEO Keywords
 
-**Magento 2 Cache Warmer** | **Page Cache Warming** | **Magento Performance Optimization** | **Full Page Cache** | **Site Speed Optimization** | **Magento 2 Extension** | **Cache Management** | **Performance Module** | **Page Load Speed** | **Magento 2 Performance** | **Cache Preloading** | **Website Speed Boost** | **Magento Cache Extension** | **Performance Enhancement** | **Fast Loading Pages** | **Cache Optimization** | **Magento Speed Module** | **Page Cache Management** | **Performance Improvement** | **Cache Warming Tool**
+**Magento 2 Cache Warmer** | **Page Cache Warming** | **Magento Performance Optimization** | **Full Page Cache** | **Varnish Cache** | **Site Speed Optimization** | **Magento 2 Extension** | **Cache Management** | **Performance Module** | **Page Load Speed** | **Magento 2 Performance** | **Cache Preloading** | **Website Speed Boost** | **Magento Cache Extension** | **Performance Enhancement** | **Fast Loading Pages** | **Cache Optimization** | **Magento Speed Module** | **Page Cache Management** | **Performance Improvement** | **Cache Warming Tool**
 
 ## Support
 

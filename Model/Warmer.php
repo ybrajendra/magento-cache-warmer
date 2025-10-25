@@ -24,6 +24,8 @@ class Warmer
 {
     const XML_PATH_ENABLED = 'cloudcommerce_cachewarmer/general/enabled';
     const XML_PATH_CRON_TIME = 'cloudcommerce_cachewarmer/general/cron_time';
+    const XML_PATH_VARNISH_ENABLED = 'cloudcommerce_cachewarmer/varnish/enabled';
+    const XML_PATH_VARNISH_HOST_URL = 'cloudcommerce_cachewarmer/varnish/host_url';
 
     private $scopeConfig;
     private $curl;
@@ -92,6 +94,22 @@ class Warmer
     }
 
     /**
+     * Check if Varnish is enabled
+     */
+    public function isVarnishEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->getValue(self::XML_PATH_VARNISH_ENABLED);
+    }
+
+    /**
+     * Get Varnish host URL
+     */
+    public function getVarnishHostUrl(): string
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_VARNISH_HOST_URL) ?: 'http://127.0.0.1:6081';
+    }
+
+    /**
      * Warm a single URL
      */
     public function warmUrl($urlData, string $type = 'unknown'): array
@@ -103,17 +121,25 @@ class Warmer
             return ['success' => false, 'message' => 'Cache warmer disabled'];
         }
 
-        // Check if already cached
-        $cacheStatus = $this->checkCacheStatus($url);
-        if ($cacheStatus['cached']) {
-            $this->logger->info("CACHED [{$type}] {$url} - skipping");
-            return [
-                'success' => true,
-                'url' => $url,
-                'type' => $type,
-                'cached' => true,
-                'message' => 'Already cached'
-            ];
+        // If Varnish is enabled, skip cache status check and modify URL
+        if ($this->isVarnishEnabled()) {
+            $requestUrl = $this->prepareVarnishUrl($url);
+            $originalHost = parse_url($url, PHP_URL_HOST);
+        } else {
+            // Check if already cached (only when Varnish is disabled)
+            $cacheStatus = $this->checkCacheStatus($url);
+            if ($cacheStatus['cached']) {
+                $this->logger->info("CACHED [{$type}] {$url} - skipping");
+                return [
+                    'success' => true,
+                    'url' => $url,
+                    'type' => $type,
+                    'cached' => true,
+                    'message' => 'Already cached'
+                ];
+            }
+            $requestUrl = $url;
+            $originalHost = null;
         }
 
         try {
@@ -123,13 +149,19 @@ class Warmer
             $this->curl->setOption(CURLOPT_SSL_VERIFYPEER, false);
             $this->curl->setOption(CURLOPT_SSL_VERIFYHOST, false);
             $this->curl->setOption(CURLOPT_USERAGENT, 'Magento Cache Warmer');
-            $this->curl->get($url);
+            
+            // Add Host header for Varnish
+            if ($this->isVarnishEnabled() && $originalHost) {
+                $this->curl->addHeader('Host', $originalHost);
+            }
+            
+            $this->curl->get($requestUrl);
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
             
             $httpCode = $this->curl->getStatus();
             
             if ($httpCode >= 200 && $httpCode < 300) {
-                $this->logger->info("SUCCESS [{$type}] {$url} ({$responseTime}ms)");
+                $this->logger->info("SUCCESS [{$type}] {$requestUrl} ({$responseTime}ms)");
                 return [
                     'success' => true,
                     'url' => $url,
@@ -154,6 +186,21 @@ class Warmer
                 'message' => $e->getMessage()
             ];
         }
+    }
+
+    /**
+     * Prepare URL for Varnish request
+     */
+    private function prepareVarnishUrl(string $url): string
+    {
+        $varnishHost = $this->getVarnishHostUrl();
+        $parsedUrl = parse_url($url);
+        $parsedVarnish = parse_url($varnishHost);
+        
+        return $parsedVarnish['scheme'] . '://' . $parsedVarnish['host'] . 
+               (isset($parsedVarnish['port']) ? ':' . $parsedVarnish['port'] : '') . 
+               ($parsedUrl['path'] ?? '') . 
+               (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
     }
 
     /**

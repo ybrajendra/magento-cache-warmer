@@ -63,7 +63,7 @@ class UrlCollector
     /**
      * Collect all URLs for warming
      */
-    public function collectUrls(int $storeId = null): array
+    public function collectUrls($storeId = null): array
     {
         $store = $storeId ? $this->storeManager->getStore($storeId) : $this->storeManager->getStore();
         $cacheKey = 'url_collection_' . $store->getId();
@@ -93,7 +93,8 @@ class UrlCollector
     private function generateUrls($store): array
     {
         $urls = [];
-        $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB, $store->isCurrentlySecure());
+        $baseUrl = $this->getStoreBaseUrl($store);
+        // $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB, $store->isCurrentlySecure());
 
         // Category URLs
         if ($this->scopeConfig->getValue(self::XML_PATH_WARM_CATEGORIES)) {
@@ -116,6 +117,12 @@ class UrlCollector
             $urls = array_merge($urls, $customUrls);
         }
 
+        // Add home page URL
+        $urls[] = [
+            'url' => $baseUrl,
+            'type' => 'home'
+        ];
+
         return $urls;
     }
 
@@ -125,10 +132,14 @@ class UrlCollector
     private function getCategoryUrls(int $storeId, string $baseUrl): array
     {
         $urls = [];
+        $store = $this->storeManager->getStore($storeId);
+        $rootCategoryId = $store->getRootCategoryId();
+        
         $collection = $this->categoryCollectionFactory->create()
             ->addAttributeToSelect(['url_key', 'url_path'])
             ->addAttributeToFilter('is_active', 1)
             ->addAttributeToFilter('level', ['gt' => 1])
+            ->addAttributeToFilter('path', ['like' => "1/{$rootCategoryId}/%"])
             ->setStoreId($storeId);
 
         foreach ($collection as $category) {
@@ -214,5 +225,26 @@ class UrlCollector
         }
 
         return $urls;
+    }
+
+    /**
+     * Get base URL with store code if enabled
+     */
+    private function getStoreBaseUrl($store): string
+    {
+        $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB, $store->isCurrentlySecure());
+        
+        // Check if "Add Store Code to URLs" is enabled
+        $addStoreCodeToUrls = $this->scopeConfig->getValue(
+            \Magento\Store\Model\Store::XML_PATH_STORE_IN_URL,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $store->getId()
+        );
+        
+        if ($addStoreCodeToUrls && $store->getCode() !== 'default') {
+            $baseUrl .= $store->getCode() . '/';
+        }
+        
+        return $baseUrl;
     }
 }

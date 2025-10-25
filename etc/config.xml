@@ -5,6 +5,10 @@
             <general>
                 <enabled>0</enabled>
             </general>
+            <varnish>
+                <enabled>0</enabled>
+                <host_url>http://127.0.0.1:6081</host_url>
+            </varnish>
             <urls>
                 <warm_categories>1</warm_categories>
                 <warm_products>1</warm_products>
